@@ -1,8 +1,8 @@
 # Nodes-Extra 1.1.0
 
-**Nodes-Extra** is a single Paper add-on for **milzzynodes** that combines two configurable gameplay systems:
+**Nodes-Extra** is a single Paper add-on for **nodes** that combines two configurable gameplay systems:
 
-1. **MilzzLogistics:** territorial supply lines, depots, roads, rail routes, native-port sea lanes, provisioning and enemy sabotage/blockades.
+1. **NodesLogistics:** territorial supply lines, depots, roads, rail routes, native-port sea lanes, provisioning and enemy sabotage/blockades.
 2. **MilzzGovernment:** political systems, ministerial offices, laws, citizen elections and manually confirmed succession.
 
 This plugin **does not replace or modify `milzzynodes.jar` or `milzzynodesmap.jar`**. It uses the Nodes nation, town, resident, territory and port APIs directly. It is deliberately isolated in its own data folder.
