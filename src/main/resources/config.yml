@@ -1,0 +1,55 @@
+# Nodes-Extra 1.0.0 — Logistics + Government for milzzynodes
+# Restart or /nextra reload after changing values.
+logistics:
+  enabled: true
+  # Maximum territories traversed from a depot (friendly contiguous territory graph)
+  maxHops: 12
+  allowAlliedRoutes: false
+  maxDepotsPerNation: 12
+  infrastructure:
+    enabled: true
+    # Virtual Nodes territory routes; does not place blocks in the world.
+    costs:
+      road:
+        material: COBBLESTONE
+        amount: 32
+      rail:
+        material: IRON_INGOT
+        amount: 24
+      sea:
+        material: OAK_PLANKS
+        amount: 64
+  depotRegistrationRequiresLeaderOrOfficer: true
+  depositMaterials:
+    food: BREAD
+    equipment: IRON_INGOT
+    fuel: COAL
+  # Fuel is consumed at origin depot for each supply delivery
+  fuelPerDelivery: 1
+  foodPerRation: 2
+  equipmentPerKit: 2
+  rationFoodRestore: 6
+  kitArrows: 8
+  deliveryCooldownSeconds: 180
+  sabotage:
+    enabled: true
+    requireDeclaredEnemies: true
+    rangeBlocks: 48
+    durationSeconds: 120
+    cooldownSeconds: 1200
+  exportMapData: true
+  mapExposeStock: false # Public viewer cannot see exact military depot inventory by default
+government:
+  enabled: true
+  defaultType: MONARCHY # MONARCHY, REPUBLIC, EMPIRE, DICTATORSHIP, COUNCIL
+  maxElectionMinutes: 10080 # seven days
+  minElectionMinutes: 5
+  minVoters: 1
+  # Elections elect the add-on head of government, not the Nodes capital-town mayor.
+  allowSovereignVeto: false
+  enableSuccession: true
+storage:
+  saveIntervalSeconds: 120
+  stateFilename: state.json
+  # Public map data contains nation/depot data only; no voting or account details.
+  publicFilename: public.json

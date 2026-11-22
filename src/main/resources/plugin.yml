@@ -1,0 +1,22 @@
+name: Nodes-Extra
+main: com.auroria.nodesextra.NodesExtraPlugin
+version: 1.1.0
+api-version: '1.21'
+authors: [Auroria-Productions]
+description: Logistics and Government expansion for MilzzyNodes
+folia-supported: false
+depend: [milzzynodes]
+softdepend: [milzzynodesmap]
+commands:
+  nextra:
+    description: Nodes-Extra logistics and government commands
+    aliases: [nodesextra, logistics, government]
+    permission: nodesextra.use
+    usage: /nextra help (also /nodes extra)
+permissions:
+  nodesextra.use:
+    description: View Nodes-Extra systems
+    default: true
+  nodesextra.admin:
+    description: Administer Nodes-Extra
+    default: op
