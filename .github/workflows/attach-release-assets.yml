@@ -1,0 +1,68 @@
+name: Attach Nodes-Extra release assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/attach-release-assets.yml
+      - src/**
+      - dist/Nodes-Extra.jar
+      - README.md
+      - build.sh
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Nodes-Extra source
+        uses: actions/checkout@v4
+
+      - name: Package source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          zip -q -r dist/Nodes-Extra-1.1.0-Source.zip \
+            src README.md CHANGELOG.md TEST_REPORT.md THIRD_PARTY.md LICENSE build.sh
+          unzip -t dist/Nodes-Extra-1.1.0-Source.zip | tail -1
+
+      - name: Attach files to existing v1.1.0 draft
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --jq '[.[] | select(.tag_name == "v1.1.0")][0].id')"
+          if [[ -z "$release_id" || "$release_id" == "null" ]]; then
+            echo "::error::Release v1.1.0 does not exist"; exit 1
+          fi
+          upload() {
+            local file="$1" name="${1##*/}" old
+            old="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets" --jq ".[] | select(.name == \"$name\") | .id")"
+            if [[ -n "$old" ]]; then
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/$old"
+            fi
+            case "$name" in
+              *.jar) content_type=application/java-archive;;
+              *.zip) content_type=application/zip;;
+              *) content_type=application/octet-stream;;
+            esac
+            curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              --header "Content-Type: $content_type" \
+              --data-binary "@$file" \
+              "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets?name=${name}" > /dev/null
+            echo "Uploaded $name to release $release_id"
+          }
+          upload dist/Nodes-Extra-1.1.0-Source.zip
+          if [[ -s dist/Nodes-Extra.jar ]]; then
+            unzip -t dist/Nodes-Extra.jar | tail -1
+            upload dist/Nodes-Extra.jar
+          else
+            echo "::notice::JAR not found in dist/Nodes-Extra.jar. Source attached; release remains draft until JAR is uploaded."
+          fi
