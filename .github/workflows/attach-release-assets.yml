@@ -5,10 +5,8 @@ on:
     branches: [main]
     paths:
       - .github/workflows/attach-release-assets.yml
-      - src/**
-      - dist/Nodes-Extra.jar
-      - README.md
-      - build.sh
+      - pom.xml
+      - src/ci/stubs/**
   workflow_dispatch:
 
 permissions:
@@ -20,17 +18,41 @@ jobs:
     steps:
       - name: Check out Nodes-Extra source
         uses: actions/checkout@v4
-
+      - name: Set up Java 21 and Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compile release JAR
+        run: |
+          set -euo pipefail
+          mvn -B -ntp -DskipTests package
+          mkdir -p dist
+          cp target/Nodes-Extra.jar dist/Nodes-Extra.jar
+          unzip -t dist/Nodes-Extra.jar | tail -1
+          unzip -p dist/Nodes-Extra.jar plugin.yml | grep -F 'version: 1.1.0'
+          if jar tf dist/Nodes-Extra.jar | grep -E '^(phonon/nodes/|net/md_5/bungee/)'; then
+            echo '::error::Compile-only API stub leaked into release JAR'; exit 1
+          fi
+      - name: Check standalone regression tests
+        run: |
+          set -euo pipefail
+          mvn -B -ntp -q dependency:build-classpath -Dmdep.outputFile=target/classpath.txt
+          cp="target/classes:target/test-classes:$(cat target/classpath.txt)"
+          for c in SupplyGraphTest ElectionTest SerializationTest NodesCommandBridgeRoutingTest; do
+            java -cp "$cp" "com.auroria.nodesextra.$c"
+          done
       - name: Package source
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
           zip -q -r dist/Nodes-Extra-1.1.0-Source.zip \
-            src README.md CHANGELOG.md TEST_REPORT.md THIRD_PARTY.md LICENSE build.sh
+            src README.md CHANGELOG.md TEST_REPORT.md THIRD_PARTY.md LICENSE build.sh pom.xml CI-BUILD.md
           unzip -t dist/Nodes-Extra-1.1.0-Source.zip | tail -1
 
-      - name: Attach files to existing v1.1.0 draft
+      - name: Attach JAR and source to v1.1.0 release and publish
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -41,7 +63,7 @@ jobs:
             echo "::error::Release v1.1.0 does not exist"; exit 1
           fi
           upload() {
-            local file="$1" name="${1##*/}" old
+            local file="$1" name="${1##*/}" old content_type
             old="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets" --jq ".[] | select(.name == \"$name\") | .id")"
             if [[ -n "$old" ]]; then
               gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/$old"
@@ -60,9 +82,9 @@ jobs:
             echo "Uploaded $name to release $release_id"
           }
           upload dist/Nodes-Extra-1.1.0-Source.zip
-          if [[ -s dist/Nodes-Extra.jar ]]; then
-            unzip -t dist/Nodes-Extra.jar | tail -1
-            upload dist/Nodes-Extra.jar
-          else
-            echo "::notice::JAR not found in dist/Nodes-Extra.jar. Source attached; release remains draft until JAR is uploaded."
-          fi
+          upload dist/Nodes-Extra.jar
+          actual_assets="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets" --jq '[.[].name] | sort | join(",")')"
+          [[ ",$actual_assets," == *",Nodes-Extra.jar,"* ]] || exit 1
+          [[ ",$actual_assets," == *",Nodes-Extra-1.1.0-Source.zip,"* ]] || exit 1
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${release_id}" -F draft=false -f tag_name=v1.1.0 -f name='Nodes-Extra v1.1.0' > /dev/null
+          echo 'Published Nodes-Extra v1.1.0 with both verified asset names'
