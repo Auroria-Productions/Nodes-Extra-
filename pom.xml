@@ -1,0 +1,27 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.auroria</groupId><artifactId>nodes-extra</artifactId><version>1.1.0</version><packaging>jar</packaging>
+  <properties><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><maven.compiler.release>21</maven.compiler.release></properties>
+  <repositories>
+    <repository><id>papermc</id><url>https://repo.papermc.io/repository/maven-public/</url></repository>
+  </repositories>
+  <dependencies>
+    <dependency><groupId>io.papermc.paper</groupId><artifactId>paper-api</artifactId><version>1.21-R0.1-SNAPSHOT</version><scope>provided</scope></dependency>
+    <dependency><groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.13.2</version><scope>provided</scope></dependency>
+  </dependencies>
+  <build>
+    <finalName>Nodes-Extra</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId><artifactId>build-helper-maven-plugin</artifactId><version>3.6.1</version>
+        <executions><execution><id>compile-only-api</id><phase>generate-sources</phase><goals><goal>add-source</goal></goals>
+          <configuration><sources><source>src/ci/stubs</source><source>src/main/stubs</source></sources></configuration>
+        </execution></executions>
+      </plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version><configuration><release>21</release></configuration></plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.4.2</version>
+        <configuration><excludes><exclude>phonon/nodes/**</exclude><exclude>net/md_5/bungee/**</exclude></excludes></configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
